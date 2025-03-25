@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Tab Muter</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <style>
+    body {
+      width: 300px;
+      padding: 10px;
+      font-family: Arial, sans-serif;
+      overflow-x: hidden;
+      box-sizing: border-box;
+      margin: 0;
+    }
+    * {
+      box-sizing: border-box;
+    }
+    .header {
+      text-align: center;
+      margin-bottom: 15px;
+      padding-bottom: 12px;
+      border-bottom: 2px solid #4CAF50;
+    }
+    .header h1 {
+      margin: 0 0 5px 0;
+      font-size: 18px;
+      color: #2e7d32;
+    }
+    .header p {
+      margin: 0;
+      font-size: 13px;
+      color: #666;
+      font-style: italic;
+    }
+    .tab-list {
+      max-height: 400px;
+      overflow-y: auto;
+      margin-bottom: 10px;
+      width: 100%;
+      padding-right: 5px;
+    }
+    .window-separator {
+      border-top: 2px solid #ccc;
+      margin: 10px 0;
+      width: 100%;
+    }
+    .window-label {
+      font-weight: bold;
+      margin-bottom: 5px;
+      padding-left: 10px;
+      font-size: 13px;
+      width: 100%;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .tab-item {
+      display: flex;
+      align-items: center;
+      padding: 5px;
+      border-bottom: 1px solid #eee;
+      margin-left: 10px;
+      width: calc(100% - 10px);
+    }
+    .tab-item:hover {
+      background-color: #f5f5f5;
+    }
+    .tab-content {
+      display: flex;
+      align-items: center;
+      flex: 1;
+      margin-left: 10px;
+      min-width: 0; /* Important for text truncation */
+    }
+    .tab-favicon {
+      width: 16px;
+      height: 16px;
+      margin-right: 8px;
+      flex-shrink: 0;
+    }
+    .tab-title {
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      font-size: 13px;
+      max-width: 200px;
+    }
+    .timer-container {
+      display: flex;
+      align-items: center;
+      margin: 10px 0;
+      gap: 10px;
+    }
+    .timer-input {
+      width: 60px;
+      padding: 5px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+    button {
+      width: 100%;
+      padding: 8px;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #45a049;
+    }
+    input[type="radio"] {
+      margin: 0;
+      flex-shrink: 0;
+    }
+    .active-timers {
+      margin-top: 15px;
+      border-top: 2px solid #eee;
+      padding-top: 10px;
+      width: 100%;
+    }
+    .active-timers h3 {
+      margin: 0 0 10px 0;
+      font-size: 14px;
+    }
+    .timer-item {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      padding: 10px;
+      border-bottom: 1px solid #eee;
+      font-size: 13px;
+      width: 100%;
+    }
+    .timer-info {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      width: 100%;
+    }
+    .timer-item .title {
+      font-weight: bold;
+      font-size: 14px;
+      margin-bottom: 4px;
+      display: flex;
+      align-items: center;
+      min-width: 0; /* Important for text truncation */
+    }
+    .timer-item .title span {
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 200px;
+    }
+    .timer-item .favicon {
+      width: 16px;
+      height: 16px;
+      margin-right: 8px;
+      flex-shrink: 0;
+    }
+    .timer-item .time {
+      color: #666;
+      flex-shrink: 0;
+    }
+    .timer-controls {
+      display: flex;
+      gap: 5px;
+      align-items: center;
+      flex-shrink: 0;
+    }
+    .timer-adjust-input {
+      width: 45px;
+      padding: 3px;
+      border: 1px solid #ccc;
+      border-radius: 3px;
+      font-size: 12px;
+    }
+    .timer-button {
+      padding: 3px 8px;
+      font-size: 12px;
+      border-radius: 3px;
+      cursor: pointer;
+      width: auto;
+    }
+    .add-time {
+      background-color: #28a745;
+    }
+    .subtract-time {
+      background-color: #ffc107;
+      color: black;
+    }
+    .stop-button {
+      background-color: #dc3545;
+    }
+    .timer-button:hover {
+      opacity: 0.9;
+    }
+    .no-timers {
+      color: #666;
+      font-style: italic;
+      font-size: 13px;
+    }
+    .support-section {
+      margin-top: 20px;
+      text-align: center;
+      padding: 15px;
+      background-color: #f8f9fa;
+      border-radius: 8px;
+      border: 1px solid #eee;
+    }
+    .support-text {
+      margin: 0 0 12px 0;
+      color: #666;
+      font-size: 13px;
+    }
+    .coffee-button {
+      display: inline-flex;
+      align-items: center;
+      padding: 8px 16px;
+      font-size: 14px;
+      color: #fff;
+      background-color: #FF5E5B;
+      text-decoration: none;
+      border-radius: 4px;
+      transition: all 0.2s;
+    }
+    .coffee-button i {
+      font-size: 16px;
+      margin-right: 8px;
+    }
+    .coffee-button:hover {
+      background-color: #FF4542;
+      transform: translateY(-1px);
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>Focus Timer</h1>
+    <p>Stay focused, achieve more</p>
+  </div>
+  <div class="tab-list" id="tabList"></div>
+  <div class="timer-container">
+    <input type="number" id="timerMinutes" class="timer-input" value="5" min="1" max="120">
+    <span>minutes</span>
+  </div>
+  <button id="toggleMute">Toggle Mute</button>
+  
+  <div class="active-timers">
+    <h3>Active Timers</h3>
+    <div id="activeTimersList"></div>
+  </div>
+  
+  <div class="support-section">
+    <p class="support-text">Enjoying Focus Timer? Support its development!</p>
+    <a href="https://ko-fi.com/YOUR_USERNAME" target="_blank" class="coffee-button">
+      <i class="fa-solid fa-mug-hot"></i>Buy me a coffee!
+    </a>
+  </div>
+  
+  <script src="popup.js"></script>
+</body>
+</html>
