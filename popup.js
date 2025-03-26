@@ -1,3 +1,5 @@
+import { getTranslation } from './translations';
+
 document.addEventListener('DOMContentLoaded', () => {
   const tabList = document.getElementById('tabList');
   const toggleMuteButton = document.getElementById('toggleMute');
@@ -5,6 +7,14 @@ document.addEventListener('DOMContentLoaded', () => {
   const activeTimersList = document.getElementById('activeTimersList');
   let selectedTabId = null;
   let activeTimers = new Map(); // Map of tabId -> {timer, endTime, tabTitle, favicon}
+
+  // Get user's preferred language from storage or browser
+  let currentLang = 'en';
+  chrome.storage.local.get('language', (result) => {
+    currentLang = result.language || navigator.language.split('-')[0] || 'en';
+    if (!['en', 'pt'].includes(currentLang)) currentLang = 'en';
+    updateLanguage(currentLang);
+  });
 
   // Load saved timers from storage
   async function loadSavedTimers() {
@@ -272,4 +282,56 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Load saved timers when popup opens
   loadSavedTimers();
+
+  // Language switching functionality
+  function updateLanguage(lang) {
+    currentLang = lang;
+    const t = getTranslation(lang);
+    
+    // Save language preference
+    chrome.storage.local.set({ language: lang });
+    
+    // Update active button state
+    document.querySelectorAll('.lang-button').forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.lang === lang);
+    });
+    
+    // Update all text content
+    document.querySelector('.header h1').textContent = t.headerTitle;
+    document.querySelector('.header p').textContent = t.headerSubtitle;
+    document.querySelectorAll('.window-label').forEach(el => {
+      el.textContent = `${t.windowLabel} ${el.dataset.windowId}`;
+    });
+    document.querySelector('.timer-label').textContent = t.timerLabel;
+    document.querySelector('#toggleButton').textContent = t.toggleMute;
+    
+    // Update active timers section
+    const activeTimersTitle = document.querySelector('.active-timers h3');
+    if (activeTimersTitle) {
+      activeTimersTitle.textContent = t.activeTimersTitle;
+    }
+    
+    // Update support section
+    document.querySelector('.support-text').textContent = t.supportText;
+    document.querySelector('.coffee-button').textContent = t.supportButton;
+    
+    // Update no timers message if present
+    const noTimersMsg = document.querySelector('.no-timers');
+    if (noTimersMsg) {
+      noTimersMsg.textContent = t.noActiveTimers;
+    }
+    
+    // Update all time remaining text
+    document.querySelectorAll('.time').forEach(el => {
+      const minutes = el.dataset.minutes;
+      el.textContent = `${t.timeRemaining}: ${minutes} ${t.minutes}`;
+    });
+  }
+
+  // Add event listeners for language buttons
+  document.querySelectorAll('.lang-button').forEach(button => {
+    button.addEventListener('click', () => {
+      updateLanguage(button.dataset.lang);
+    });
+  });
 });

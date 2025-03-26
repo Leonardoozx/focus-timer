@@ -20,6 +20,7 @@
       margin-bottom: 15px;
       padding-bottom: 12px;
       border-bottom: 2px solid #4CAF50;
+      position: relative;
     }
     .header h1 {
       margin: 0 0 5px 0;
@@ -31,6 +32,31 @@
       font-size: 13px;
       color: #666;
       font-style: italic;
+    }
+    .language-switcher {
+      position: absolute;
+      top: 0;
+      right: 0;
+      display: flex;
+      gap: 5px;
+    }
+    .lang-button {
+      background: none;
+      border: none;
+      padding: 4px;
+      width: auto;
+      cursor: pointer;
+      opacity: 0.6;
+      transition: all 0.2s;
+      font-size: 20px;
+    }
+    .lang-button:hover {
+      opacity: 1;
+      transform: scale(1.1);
+    }
+    .lang-button.active {
+      opacity: 1;
+      transform: scale(1.1);
     }
     .tab-list {
       max-height: 400px;
@@ -236,6 +262,10 @@
 </head>
 <body>
   <div class="header">
+    <div class="language-switcher">
+      <button class="lang-button" data-lang="en" title="English">🇺🇸</button>
+      <button class="lang-button" data-lang="pt" title="Português">🇧🇷</button>
+    </div>
     <h1>Focus Timer</h1>
     <p>Stay focused, achieve more</p>
   </div>
@@ -253,7 +283,7 @@
   
   <div class="support-section">
     <p class="support-text">Enjoying Focus Timer? Support its development!</p>
-    <a href="https://ko-fi.com/YOUR_USERNAME" target="_blank" class="coffee-button">
+    <a href="https://ko-fi.com/focustimer" target="_blank" class="coffee-button">
       <i class="fa-solid fa-mug-hot"></i>Buy me a coffee!
     </a>
   </div>
