@@ -5,12 +5,19 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
   <style>
     body {
-      width: 300px;
-      padding: 10px;
-      font-family: Arial, sans-serif;
+      width: 320px;
+      padding: 12px;
+      font-family: 'Segoe UI', Roboto, Arial, sans-serif;
       overflow-x: hidden;
       box-sizing: border-box;
       margin: 0;
+      background-color: #fafafa;
+      color: #333;
+    }
+    
+    .tab-list, .timer-control-panel, .active-timers, .support-section {
+      width: 100%;
+      box-sizing: border-box;
     }
     * {
       box-sizing: border-box;
@@ -18,8 +25,7 @@
     .header {
       text-align: center;
       margin-bottom: 15px;
-      padding-bottom: 12px;
-      border-bottom: 2px solid #4CAF50;
+      padding: 10px 0 15px;
       position: relative;
     }
     .header h1 {
@@ -33,37 +39,16 @@
       color: #666;
       font-style: italic;
     }
-    .language-switcher {
-      position: absolute;
-      top: 0;
-      right: 0;
-      display: flex;
-      gap: 5px;
-    }
-    .lang-button {
-      background: none;
-      border: none;
-      padding: 4px;
-      width: auto;
-      cursor: pointer;
-      opacity: 0.6;
-      transition: all 0.2s;
-      font-size: 20px;
-    }
-    .lang-button:hover {
-      opacity: 1;
-      transform: scale(1.1);
-    }
-    .lang-button.active {
-      opacity: 1;
-      transform: scale(1.1);
-    }
+
     .tab-list {
-      max-height: 400px;
+      max-height: 300px;
       overflow-y: auto;
       margin-bottom: 10px;
       width: 100%;
       padding-right: 5px;
+      background-color: white;
+      border-radius: 8px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
     }
     .window-separator {
       border-top: 2px solid #ccc;
@@ -83,13 +68,13 @@
     .tab-item {
       display: flex;
       align-items: center;
-      padding: 5px;
-      border-bottom: 1px solid #eee;
-      margin-left: 10px;
-      width: calc(100% - 10px);
+      padding: 8px 10px;
+      border-bottom: 1px solid #f0f0f0;
+      width: 100%;
+      transition: background-color 0.15s;
     }
     .tab-item:hover {
-      background-color: #f5f5f5;
+      background-color: #f9f9f9;
     }
     .tab-content {
       display: flex;
@@ -111,66 +96,150 @@
       font-size: 13px;
       max-width: 200px;
     }
+    .timer-control-panel {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+      margin: 15px 0;
+      padding: 15px;
+      background-color: #f9f9f9;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+      width: 100%;
+    }
     .timer-container {
       display: flex;
       align-items: center;
-      margin: 10px 0;
-      gap: 10px;
+      gap: 12px;
+    }
+    .timer-input-wrapper {
+      display: flex;
+      align-items: center;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
     }
     .timer-input {
       width: 60px;
-      padding: 5px;
-      border: 1px solid #ccc;
-      border-radius: 4px;
+      padding: 10px 8px;
+      border: none;
+      text-align: center;
+      font-size: 15px;
+      font-weight: 500;
+      color: #333;
+      background-color: white;
     }
-    button {
+    .timer-input:focus {
+      outline: none;
+    }
+    .timer-controls {
+      display: flex;
+      flex-direction: column;
+    }
+    .timer-adjust {
+      width: 24px;
+      height: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background-color: #f1f1f1;
+      border: none;
+      cursor: pointer;
+      font-weight: bold;
+      color: #555;
+      padding: 0;
+      transition: background-color 0.2s;
+    }
+    .timer-adjust:hover {
+      background-color: #e1e1e1;
+    }
+    .timer-label {
+      font-size: 14px;
+      color: #555;
+    }
+    .action-button {
       width: 100%;
-      padding: 8px;
+      padding: 12px;
       background-color: #4CAF50;
       color: white;
       border: none;
-      border-radius: 4px;
+      border-radius: 6px;
       cursor: pointer;
+      font-weight: 500;
+      font-size: 14px;
+      transition: all 0.2s ease;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
     }
-    button:hover {
+    .action-button:hover {
       background-color: #45a049;
+      transform: translateY(-1px);
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
     }
-    input[type="radio"] {
+    .action-button:disabled {
+      background-color: #cccccc;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+    input[type="checkbox"] {
       margin: 0;
       flex-shrink: 0;
+      cursor: pointer;
+    }
+    .select-all {
+      margin: 0 0 10px 10px;
+      font-size: 13px;
+      display: flex;
+      align-items: center;
+      gap: 5px;
     }
     .active-timers {
       margin-top: 15px;
-      border-top: 2px solid #eee;
-      padding-top: 10px;
+      padding: 15px;
       width: 100%;
+      background-color: #f9f9f9;
+      border-radius: 8px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
     }
     .active-timers h3 {
-      margin: 0 0 10px 0;
+      margin: 0 0 12px 0;
       font-size: 14px;
+      color: #333;
+      font-weight: 600;
     }
     .timer-item {
       display: flex;
       flex-direction: column;
-      gap: 8px;
-      padding: 10px;
-      border-bottom: 1px solid #eee;
+      padding: 8px 10px;
+      border-bottom: 1px solid #f0f0f0;
       font-size: 13px;
       width: 100%;
+      background-color: white;
+      border-radius: 6px;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+      margin-bottom: 6px;
+      gap: 6px;
     }
-    .timer-info {
+    .timer-top-row {
       display: flex;
-      justify-content: space-between;
       align-items: center;
+      justify-content: space-between;
+      width: 100%;
+    }
+    
+    .timer-bottom-row {
+      display: flex;
+      gap: 6px;
       width: 100%;
     }
     .timer-item .title {
-      font-weight: bold;
-      font-size: 14px;
-      margin-bottom: 4px;
+      font-weight: 500;
+      font-size: 13px;
       display: flex;
       align-items: center;
       min-width: 0; /* Important for text truncation */
+      flex: 1;
     }
     .timer-item .title span {
       white-space: nowrap;
@@ -179,34 +248,40 @@
       max-width: 200px;
     }
     .timer-item .favicon {
-      width: 16px;
-      height: 16px;
-      margin-right: 8px;
+      width: 14px;
+      height: 14px;
+      margin-right: 6px;
       flex-shrink: 0;
     }
     .timer-item .time {
-      color: #666;
+      color: #444;
+      font-weight: 600;
+      font-size: 12px;
       flex-shrink: 0;
+      background-color: #f0f8f0;
+      padding: 2px 8px;
+      border-radius: 3px;
+      margin-left: 8px;
     }
-    .timer-controls {
-      display: flex;
-      gap: 5px;
-      align-items: center;
-      flex-shrink: 0;
-    }
+
     .timer-adjust-input {
-      width: 45px;
-      padding: 3px;
-      border: 1px solid #ccc;
+      width: 35px;
+      padding: 2px 4px;
+      border: 1px solid #ddd;
       border-radius: 3px;
       font-size: 12px;
+      text-align: center;
     }
     .timer-button {
-      padding: 3px 8px;
-      font-size: 12px;
+      padding: 4px 0;
+      font-size: 11px;
       border-radius: 3px;
       cursor: pointer;
-      width: auto;
+      border: none;
+      color: white;
+      transition: all 0.2s;
+      white-space: nowrap;
+      flex: 1;
     }
     .add-time {
       background-color: #28a745;
@@ -225,14 +300,18 @@
       color: #666;
       font-style: italic;
       font-size: 13px;
+      text-align: center;
+      padding: 15px 0;
+      background-color: white;
+      border-radius: 6px;
     }
     .support-section {
       margin-top: 20px;
       text-align: center;
       padding: 15px;
-      background-color: #f8f9fa;
+      background-color: #f9f9f9;
       border-radius: 8px;
-      border: 1px solid #eee;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
     }
     .support-text {
       margin: 0 0 12px 0;
@@ -262,19 +341,23 @@
 </head>
 <body>
   <div class="header">
-    <div class="language-switcher">
-      <button class="lang-button" data-lang="en" title="English">🇺🇸</button>
-      <button class="lang-button" data-lang="pt" title="Português">🇧🇷</button>
-    </div>
     <h1>Focus Timer</h1>
     <p>Stay focused, achieve more</p>
   </div>
   <div class="tab-list" id="tabList"></div>
-  <div class="timer-container">
-    <input type="number" id="timerMinutes" class="timer-input" value="5" min="1" max="120">
-    <span>minutes</span>
+  <div class="timer-control-panel">
+    <div class="timer-container">
+      <div class="timer-input-wrapper">
+        <input type="number" id="timerMinutes" class="timer-input" value="5" min="1" max="120">
+        <div class="timer-controls">
+          <button class="timer-adjust" id="decreaseTime">-</button>
+          <button class="timer-adjust" id="increaseTime">+</button>
+        </div>
+      </div>
+      <span class="timer-label">minutes</span>
+    </div>
+    <button id="toggleMute" class="action-button">Mute Selected Tabs</button>
   </div>
-  <button id="toggleMute">Toggle Mute</button>
   
   <div class="active-timers">
     <h3>Active Timers</h3>

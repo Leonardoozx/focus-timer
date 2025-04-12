@@ -1,20 +1,21 @@
-import { getTranslation } from './translations';
-
 document.addEventListener('DOMContentLoaded', () => {
   const tabList = document.getElementById('tabList');
   const toggleMuteButton = document.getElementById('toggleMute');
   const timerInput = document.getElementById('timerMinutes');
   const activeTimersList = document.getElementById('activeTimersList');
-  let selectedTabId = null;
+  let selectedTabs = new Set(); // Set of selected tab IDs
   let activeTimers = new Map(); // Map of tabId -> {timer, endTime, tabTitle, favicon}
 
-  // Get user's preferred language from storage or browser
-  let currentLang = 'en';
-  chrome.storage.local.get('language', (result) => {
-    currentLang = result.language || navigator.language.split('-')[0] || 'en';
-    if (!['en', 'pt'].includes(currentLang)) currentLang = 'en';
-    updateLanguage(currentLang);
-  });
+  // Initialize app
+
+  // Function to update button text based on selection
+  function updateButtonState() {
+    const anySelected = selectedTabs.size > 0;
+    const minutes = parseInt(timerInput.value) || 5;
+    toggleMuteButton.disabled = !anySelected;
+    toggleMuteButton.textContent = `Mute ${selectedTabs.size} tab${selectedTabs.size !== 1 ? 's' : ''} for ${minutes} minute${minutes !== 1 ? 's' : ''}`;
+
+  }
 
   // Load saved timers from storage
   async function loadSavedTimers() {
@@ -85,11 +86,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (newTimeLeft <= 0) {
       // If no time left, stop the timer
-      chrome.tabs.update(tabId, { muted: false }, (tab) => {
-        if (tabId === selectedTabId) {
-          updateButtonText(false);
-        }
-      });
+      chrome.tabs.update(tabId, { muted: false });
       removeTimer(tabId);
       return;
     }
@@ -116,11 +113,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (activeTimers.has(tabId)) {
       const timerInfo = activeTimers.get(tabId);
       clearTimeout(timerInfo.timer);
-      chrome.tabs.update(tabId, { muted: false }, (tab) => {
-        if (tabId === selectedTabId) {
-          updateButtonText(false);
-        }
-      });
+      chrome.tabs.update(tabId, { muted: false });
       removeTimer(tabId);
     }
   }
@@ -141,35 +134,31 @@ document.addEventListener('DOMContentLoaded', () => {
       const timerElement = document.createElement('div');
       timerElement.className = 'timer-item';
       timerElement.innerHTML = `
-        <div class="title">
-          <img class="favicon" src="${timerInfo.favicon || 'icons/icon16.png'}" alt="">
-          <span>${timerInfo.tabTitle}</span>
-        </div>
-        <div class="timer-info">
-          <span class="time">${minutes}:${seconds.toString().padStart(2, '0')}</span>
-          <div class="timer-controls">
-            <input type="number" class="timer-adjust-input" value="5" min="1" max="60">
-            <button class="timer-button add-time">+</button>
-            <button class="timer-button subtract-time">-</button>
-            <button class="timer-button stop-button">Stop</button>
+        <div class="timer-top-row">
+          <div class="title">
+            <img class="favicon" src="${timerInfo.favicon || 'icons/icon16.png'}" alt="">
+            <span>${timerInfo.tabTitle}</span>
           </div>
+          <span class="time">${minutes}:${seconds.toString().padStart(2, '0')}</span>
+        </div>
+        <div class="timer-bottom-row">
+          <button class="timer-button add-time">+5m</button>
+          <button class="timer-button subtract-time">-5m</button>
+          <button class="timer-button stop-button">Stop</button>
         </div>
       `;
 
       // Add event listeners for timer controls
-      const adjustInput = timerElement.querySelector('.timer-adjust-input');
       const addButton = timerElement.querySelector('.add-time');
       const subtractButton = timerElement.querySelector('.subtract-time');
       const stopButton = timerElement.querySelector('.stop-button');
 
       addButton.addEventListener('click', () => {
-        const minutes = Number(adjustInput.value) || 5;
-        adjustTimer(tabId, minutes);
+        adjustTimer(tabId, 5);
       });
 
       subtractButton.addEventListener('click', () => {
-        const minutes = Number(adjustInput.value) || 5;
-        adjustTimer(tabId, -minutes);
+        adjustTimer(tabId, -5);
       });
 
       stopButton.addEventListener('click', () => stopTimer(tabId));
@@ -180,6 +169,59 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Update timers display every second
   setInterval(updateTimersList, 1000);
+
+  // Function to create tab elements
+  function createTabElement(tab) {
+    const tabElement = document.createElement('div');
+    tabElement.className = 'tab-item';
+    
+    const checkbox = document.createElement('input');
+    checkbox.type = 'checkbox';
+    checkbox.dataset.tabId = tab.id;
+    checkbox.checked = selectedTabs.has(tab.id);
+    
+    const tabContent = document.createElement('div');
+    tabContent.className = 'tab-content';
+    
+    const favicon = document.createElement('img');
+    favicon.className = 'tab-favicon';
+    favicon.src = tab.favIconUrl || 'icons/icon16.png';
+    favicon.alt = '';
+    
+    const title = document.createElement('span');
+    title.className = 'tab-title';
+    title.textContent = tab.title;
+    
+    tabContent.appendChild(favicon);
+    tabContent.appendChild(title);
+    tabElement.appendChild(checkbox);
+    tabElement.appendChild(tabContent);
+
+    // Handle checkbox changes
+    checkbox.addEventListener('change', (e) => {
+      if (e.target.checked) {
+        selectedTabs.add(tab.id);
+      } else {
+        selectedTabs.delete(tab.id);
+      }
+      updateButtonState();
+    });
+
+    // Handle clicking anywhere on the tab item
+    tabElement.addEventListener('click', (e) => {
+      if (e.target !== checkbox) {
+        checkbox.checked = !checkbox.checked;
+        if (checkbox.checked) {
+          selectedTabs.add(tab.id);
+        } else {
+          selectedTabs.delete(tab.id);
+        }
+        updateButtonState();
+      }
+    });
+
+    return tabElement;
+  }
 
   // Load and display all tabs across all windows
   chrome.tabs.query({}, (tabs) => {
@@ -194,144 +236,114 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Display tabs grouped by window
     Object.entries(tabsByWindow).forEach(([windowId, windowTabs], windowIndex) => {
-      // Add window separator
+      // Add window separator and select all checkbox
       if (windowIndex > 0) {
         const separator = document.createElement('div');
         separator.className = 'window-separator';
         tabList.appendChild(separator);
       }
+      
+      // Add select all checkbox for this window
+      const selectAllDiv = document.createElement('div');
+      selectAllDiv.className = 'select-all';
+      const selectAllCheckbox = document.createElement('input');
+      selectAllCheckbox.type = 'checkbox';
+      selectAllCheckbox.id = `select-all-${windowId}`;
+      const selectAllLabel = document.createElement('label');
+      selectAllLabel.htmlFor = `select-all-${windowId}`;
+      selectAllLabel.textContent = 'Select all tabs in this window';
+      selectAllDiv.appendChild(selectAllCheckbox);
+      selectAllDiv.appendChild(selectAllLabel);
+      tabList.appendChild(selectAllDiv);
+
+      // Handle select all functionality
+      selectAllCheckbox.addEventListener('change', (e) => {
+        const windowCheckboxes = windowTabs.map(tab => 
+          document.querySelector(`input[data-tab-id="${tab.id}"]`)
+        ).filter(Boolean);
+        
+        windowCheckboxes.forEach(checkbox => {
+          checkbox.checked = e.target.checked;
+          const tabId = parseInt(checkbox.dataset.tabId);
+          if (e.target.checked) {
+            selectedTabs.add(tabId);
+          } else {
+            selectedTabs.delete(tabId);
+          }
+        });
+        updateButtonState();
+      });
 
       // Add window label
       const windowLabel = document.createElement('div');
       windowLabel.className = 'window-label';
-      windowLabel.textContent = `Window ${windowIndex + 1}`;
+      windowLabel.textContent = `Window ${parseInt(windowId)}`;
       tabList.appendChild(windowLabel);
 
       // Add tabs for this window
       windowTabs.forEach(tab => {
-        const tabElement = document.createElement('div');
-        tabElement.className = 'tab-item';
-        tabElement.innerHTML = `
-          <input type="radio" name="tab" value="${tab.id}">
-          <div class="tab-content">
-            <img class="tab-favicon" src="${tab.favIconUrl || 'icons/icon16.png'}" alt="">
-            <span class="tab-title">${tab.title}</span>
-          </div>
-        `;
-        
-        const radio = tabElement.querySelector('input');
-        radio.addEventListener('change', () => {
-          selectedTabId = tab.id;
-          updateButtonText(tab.mutedInfo.muted);
-        });
-
-        if (tab.active && windowIndex === 0) {
-          radio.checked = true;
-          selectedTabId = tab.id;
-          updateButtonText(tab.mutedInfo.muted);
-        }
-
-        tabList.appendChild(tabElement);
+        tabList.appendChild(createTabElement(tab));
       });
     });
   });
 
-  // Toggle mute button click handler
+  // Handle mute button click
   toggleMuteButton.addEventListener('click', () => {
-    if (!selectedTabId) return;
+    const minutes = parseInt(timerInput.value) || 5;
+    const duration = minutes * 60 * 1000; // Convert to milliseconds
 
-    chrome.tabs.get(selectedTabId, (tab) => {
-      // If we're unmuting, clear any active timer
-      if (tab.mutedInfo.muted) {
-        if (activeTimers.has(selectedTabId)) {
-          removeTimer(selectedTabId);
-        }
-      } else {
-        // If we're muting, start the timer
-        const minutes = Number(timerInput.value) || 5;
-        const endTime = Date.now() + (minutes * 60 * 1000);
-        
+    // Mute all selected tabs
+    selectedTabs.forEach(tabId => {
+      chrome.tabs.update(tabId, { muted: true }, (tab) => {
         const timer = setTimeout(() => {
-          chrome.tabs.update(selectedTabId, { muted: false });
-          removeTimer(selectedTabId);
-        }, minutes * 60 * 1000);
+          chrome.tabs.update(tabId, { muted: false });
+          removeTimer(tabId);
+        }, duration);
 
-        activeTimers.set(selectedTabId, {
-          timer,
-          endTime,
-          tabTitle: tab.title,
-          favicon: tab.favIconUrl
+        chrome.tabs.get(tabId, (tab) => {
+          activeTimers.set(tabId, {
+            timer,
+            endTime: Date.now() + duration,
+            tabTitle: tab.title,
+            favicon: tab.favIconUrl
+          });
+          saveTimers();
+          updateTimersList();
         });
-        saveTimers();
-        updateTimersList();
-      }
-
-      // Toggle the mute state
-      chrome.tabs.update(selectedTabId, { 
-        muted: !tab.mutedInfo.muted 
-      }, (updatedTab) => {
-        updateButtonText(updatedTab.mutedInfo.muted);
       });
     });
+
+    // Clear selections after starting timers
+    selectedTabs.clear();
+    document.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
+      checkbox.checked = false;
+    });
+    updateButtonState();
   });
 
-  // Update button text based on mute state
-  function updateButtonText(isMuted) {
-    toggleMuteButton.textContent = isMuted ? 'Unmute Tab' : 'Mute Tab';
-  }
+  // Add event listeners for timer adjustment buttons
+  const increaseTimeBtn = document.getElementById('increaseTime');
+  const decreaseTimeBtn = document.getElementById('decreaseTime');
+  
+  increaseTimeBtn.addEventListener('click', () => {
+    let currentValue = parseInt(timerInput.value) || 5;
+    if (currentValue < 120) {
+      timerInput.value = currentValue + 1;
+      updateButtonState();
+    }
+  });
+  
+  decreaseTimeBtn.addEventListener('click', () => {
+    let currentValue = parseInt(timerInput.value) || 5;
+    if (currentValue > 1) {
+      timerInput.value = currentValue - 1;
+      updateButtonState();
+    }
+  });
+
+  // Update button text when timer input changes
+  timerInput.addEventListener('input', updateButtonState);
 
   // Load saved timers when popup opens
   loadSavedTimers();
-
-  // Language switching functionality
-  function updateLanguage(lang) {
-    currentLang = lang;
-    const t = getTranslation(lang);
-    
-    // Save language preference
-    chrome.storage.local.set({ language: lang });
-    
-    // Update active button state
-    document.querySelectorAll('.lang-button').forEach(btn => {
-      btn.classList.toggle('active', btn.dataset.lang === lang);
-    });
-    
-    // Update all text content
-    document.querySelector('.header h1').textContent = t.headerTitle;
-    document.querySelector('.header p').textContent = t.headerSubtitle;
-    document.querySelectorAll('.window-label').forEach(el => {
-      el.textContent = `${t.windowLabel} ${el.dataset.windowId}`;
-    });
-    document.querySelector('.timer-label').textContent = t.timerLabel;
-    document.querySelector('#toggleButton').textContent = t.toggleMute;
-    
-    // Update active timers section
-    const activeTimersTitle = document.querySelector('.active-timers h3');
-    if (activeTimersTitle) {
-      activeTimersTitle.textContent = t.activeTimersTitle;
-    }
-    
-    // Update support section
-    document.querySelector('.support-text').textContent = t.supportText;
-    document.querySelector('.coffee-button').textContent = t.supportButton;
-    
-    // Update no timers message if present
-    const noTimersMsg = document.querySelector('.no-timers');
-    if (noTimersMsg) {
-      noTimersMsg.textContent = t.noActiveTimers;
-    }
-    
-    // Update all time remaining text
-    document.querySelectorAll('.time').forEach(el => {
-      const minutes = el.dataset.minutes;
-      el.textContent = `${t.timeRemaining}: ${minutes} ${t.minutes}`;
-    });
-  }
-
-  // Add event listeners for language buttons
-  document.querySelectorAll('.lang-button').forEach(button => {
-    button.addEventListener('click', () => {
-      updateLanguage(button.dataset.lang);
-    });
-  });
 });
