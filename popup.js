@@ -243,18 +243,32 @@ document.addEventListener('DOMContentLoaded', () => {
         tabList.appendChild(separator);
       }
       
-      // Add select all checkbox for this window
-      const selectAllDiv = document.createElement('div');
-      selectAllDiv.className = 'select-all';
+      // Add window label and select all checkbox inline
+      // Create a single flex container for window label and select all
+      const windowHeader = document.createElement('div');
+      windowHeader.style.display = 'flex';
+      windowHeader.style.alignItems = 'center';
+      windowHeader.style.gap = '10px';
+      windowHeader.style.marginBottom = '4px';
+
+      const windowLabel = document.createElement('div');
+      windowLabel.className = 'window-label';
+      windowLabel.textContent = `Window ${windowIndex + 1}`;
+
       const selectAllCheckbox = document.createElement('input');
       selectAllCheckbox.type = 'checkbox';
       selectAllCheckbox.id = `select-all-${windowId}`;
+      selectAllCheckbox.style.marginLeft = '10px';
+      selectAllCheckbox.style.marginRight = '4px';
       const selectAllLabel = document.createElement('label');
       selectAllLabel.htmlFor = `select-all-${windowId}`;
-      selectAllLabel.textContent = 'Select all tabs in this window';
-      selectAllDiv.appendChild(selectAllCheckbox);
-      selectAllDiv.appendChild(selectAllLabel);
-      tabList.appendChild(selectAllDiv);
+      selectAllLabel.textContent = 'Select all';
+
+      windowHeader.appendChild(windowLabel);
+      windowHeader.appendChild(selectAllLabel);
+      selectAllLabel.style.whiteSpace = 'nowrap';
+      windowHeader.appendChild(selectAllCheckbox);
+      tabList.appendChild(windowHeader);
 
       // Handle select all functionality
       selectAllCheckbox.addEventListener('change', (e) => {
@@ -273,12 +287,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
         updateButtonState();
       });
-
-      // Add window label
-      const windowLabel = document.createElement('div');
-      windowLabel.className = 'window-label';
-      windowLabel.textContent = `Window ${parseInt(windowId)}`;
-      tabList.appendChild(windowLabel);
 
       // Add tabs for this window
       windowTabs.forEach(tab => {
