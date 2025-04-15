@@ -74,7 +74,7 @@ Contributions are welcome! Feel free to:
 ## ☕ Support
 
 If you find Focus Timer helpful, consider supporting its development:
-[Buy me a coffee](https://ko-fi.com/focustimer)
+[Buy me a coffee](https://ko-fi.com/leonardourci)
 
 ## 📄 License
 

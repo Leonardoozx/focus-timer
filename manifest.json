@@ -1,8 +1,10 @@
 {
   "manifest_version": 3,
   "name": "Focus Timer",
-  "version": "1.0",
-  "description": "A focus timer that mutes selected tabs for a specified duration",
+  "version": "1.0.0",
+  "description": "Boost your productivity with Focus Timer - a minimalist extension that temporarily mutes distracting tabs for specified durations.",
+  "author": "Leonardo Guimarães Urci",
+  "homepage_url": "https://ko-fi.com/leonardourci",
   "permissions": [
     "tabs",
     "storage"
@@ -13,11 +15,25 @@
       "16": "icons/icon16.png",
       "48": "icons/icon48.png",
       "128": "icons/icon128.png"
-    }
+    },
+    "default_title": "Focus Timer"
   },
   "icons": {
     "16": "icons/icon16.png",
     "48": "icons/icon48.png",
     "128": "icons/icon128.png"
-  }
+  },
+  "minimum_chrome_version": "88",
+  "short_name": "Focus Timer",
+  "offline_enabled": true,
+  "content_security_policy": {
+    "extension_pages": "script-src 'self'; object-src 'self'"
+  },
+  "web_accessible_resources": [
+    {
+      "resources": ["icons/*"],
+      "matches": ["<all_urls>"]
+    }
+  ],
+  "incognito": "split"
 }
